@@ -1,5 +1,6 @@
 package com.example.projectcattapperremake
 
+import android.media.MediaPlayer
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,9 +29,12 @@ import kotlinx.coroutines.delay
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
 
 
-            @Composable
+@Composable
             fun GameScreen(onReturnToMenu: () -> Unit) {
 
                 // Set up variables here:
@@ -53,11 +57,37 @@ import androidx.compose.foundation.layout.BoxWithConstraints
                 val level3 by remember { mutableStateOf(R.drawable.wiredweirdworld) }
                 val level4 by remember { mutableStateOf(R.drawable.kingsrock) }
                 val level5 by remember { mutableStateOf(R.drawable.facemountain) }
+                val level6 by remember { mutableStateOf(R.drawable.stickmanparadise) }
+                val level7 by remember { mutableStateOf(R.drawable.ticcattoe) }
 
                 var time by remember { mutableStateOf(0L) }
                 var timeRunning by remember { mutableStateOf(false) }
 
                 var gameOver by remember { mutableStateOf(false) }
+
+                val context = LocalContext.current
+                val ambianceMusic = remember { MediaPlayer.create(context, R.raw.heartofnowheremacleod) }
+                val gameMusic = remember { MediaPlayer.create(context, R.raw.thinkingmusickmacleod) }
+                val catSE1 = remember { MediaPlayer.create(context, R.raw.catsound1) }
+                val catSE2 = remember { MediaPlayer.create(context, R.raw.catsound2) }
+                val catSE3 = remember { MediaPlayer.create(context, R.raw.catsound3) }
+                val catSE4 = remember { MediaPlayer.create(context, R.raw.catsound4) }
+                val catSE5 = remember { MediaPlayer.create(context, R.raw.catsound5) }
+
+                DisposableEffect(Unit) {
+                    ambianceMusic.isLooping = true
+                    ambianceMusic.start()
+
+                    onDispose {
+                        ambianceMusic.release()
+                        gameMusic.release()
+                        catSE1.release()
+                        catSE2.release()
+                        catSE3.release()
+                        catSE4.release()
+                        catSE5.release()
+                    }
+                }
 
                 // Chronotimer
                 LaunchedEffect(timeRunning) {
@@ -107,7 +137,53 @@ import androidx.compose.foundation.layout.BoxWithConstraints
                         gameBtnX = 0.70f
                         gameBtnY = 0.3375f
                     }
+                    else if(currentLevel == 6) {
+                        emptyBg = level6
+                        gameBtnWidth = 0.25f
+                        gameBtnHeight = 0.2f
+                        gameBtnX = 0.7f
+                        gameBtnY = 0.4f
+                    }
+                    else if(currentLevel == 7) {
+                        emptyBg = level7
+                        gameBtnWidth = 0.15f
+                        gameBtnHeight = 0.05f
+                        gameBtnX = 0.5f
+                        gameBtnY = 0.7f
+                    }
                     // Here I can add more levels!
+                }
+
+                // Function to determine which randomized sound effect is going to play
+                fun catSoundEffect() {
+                    var randomCatSound = (1..5).random()
+
+                    if(randomCatSound == 1) {
+                        if(!catSE1.isPlaying) {
+                            catSE1.isLooping = false
+                            catSE1.start()
+                        }
+                    } else if(randomCatSound == 2) {
+                        if(!catSE2.isPlaying) {
+                            catSE2.isLooping = false
+                            catSE2.start()
+                        }
+                    } else if(randomCatSound == 3) {
+                        if(!catSE3.isPlaying) {
+                            catSE3.isLooping = false
+                            catSE3.start()
+                        }
+                    } else if(randomCatSound == 4) {
+                        if(!catSE4.isPlaying) {
+                            catSE4.isLooping = false
+                            catSE4.start()
+                        }
+                    } else if(randomCatSound == 5) {
+                        if(!catSE5.isPlaying) {
+                            catSE5.isLooping = false
+                            catSE5.start()
+                        }
+                    }
                 }
 
                 // Function to run when game ends
@@ -123,6 +199,16 @@ import androidx.compose.foundation.layout.BoxWithConstraints
                     gameBtnY = 0.5f
                     gameBtnText = "MENU"
                     gameBtnStrokeColor = Color(0xff000000)
+                    // Stops the background music
+                    if(gameMusic.isPlaying) {
+                        gameMusic.pause()
+                        gameMusic.seekTo(0)
+                    }
+
+                    if(!ambianceMusic.isPlaying) {
+                        ambianceMusic.isLooping = true
+                        ambianceMusic.start()
+                    }
                 }
 
                 // Game Function
@@ -133,14 +219,31 @@ import androidx.compose.foundation.layout.BoxWithConstraints
                     gameBtnText = " "
                     gameBtnStrokeColor = Color(0x00000000)
 
+                    // Stop the ambiance
+                    if(ambianceMusic.isPlaying) {
+                        ambianceMusic.pause()
+                        ambianceMusic.seekTo(0)
+                    }
+
+                    // Start the background music
+                    if(!gameMusic.isPlaying) {
+                        gameMusic.isLooping = true
+                        gameMusic.start()
+                    }
+
+                    // Play the sound effect function
+                    if(!gameOver) {
+                        catSoundEffect()
+                    }
+
                     // Randomize Level
-                    var randomNumber = (1..5).random()
+                    var randomNumber = (1..7).random()
                     println("RandomLv:")
                     println(randomNumber)
                     // If its the same level as last time, randomize it again
                     if(randomNumber == currentLevel) {
                         println("SAME LEVEL!")
-                        randomNumber = (1..5).random()
+                        randomNumber = (1..7).random()
                     }
                     currentLevel = randomNumber
                     LevelLoad()
